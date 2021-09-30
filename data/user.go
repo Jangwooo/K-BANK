@@ -12,6 +12,7 @@ type User struct {
 	Name        string         `db:"name"`
 	Nickname    sql.NullString `db:"nickname"`
 	Agree       string         `db:"agree"`
+	UserType    string         `db:"user_type"`
 }
 
 func (u User) SignIn() error {
@@ -20,5 +21,15 @@ func (u User) SignIn() error {
 		return err
 	}
 	defer db.Close()
+
+	if u.Nickname.Valid {
+		_, err = db.NamedExec("INSERT INTO user values (:user_id, :password, :phone_number, :SSN, :name, :nickname, :agree, :user_type)", &u)
+	} else {
+		_, err = db.NamedExec("INSERT INTO user(user_id, password, phone_number, SSN, name, agree) values (:user_id, :password, :phone_number, :SSN, :name, :agree)", &u)
+	}
+
+	if err != nil {
+		return err
+	}
 	return nil
 }
