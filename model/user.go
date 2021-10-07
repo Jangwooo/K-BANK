@@ -1,7 +1,10 @@
-package data
+package model
 
 import (
 	"database/sql"
+	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -32,4 +35,20 @@ func (u User) SignIn() error {
 		return err
 	}
 	return nil
+}
+
+func (u User) LoginWithID(id, pwd string) (bool, error) {
+	db, err := ConnectDB()
+	if err != nil {
+		return false, fmt.Errorf("can't connect to database: %s", err)
+	}
+	defer db.Close()
+
+	err = db.Get(&u, "SELECT * FROM user where user_id = ?", id)
+
+	match := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(pwd))
+	if match != nil {
+		return false, fmt.Errorf("not match password")
+	}
+	return true, nil
 }

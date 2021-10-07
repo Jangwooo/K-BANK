@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"K-BANK/data"
+	"K-BANK/model"
 )
 
 func DuplicateCheck(table string, column string, value string) bool {
-	db, err := data.ConnectDB()
+	db, err := model.ConnectDB()
 	var result string
 	if err != nil {
 		log.Panic(err)
