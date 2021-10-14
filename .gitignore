@@ -112,3 +112,4 @@ out/
 images/*
 .idea
 req.http
+.env
