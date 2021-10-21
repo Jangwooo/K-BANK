@@ -1,65 +1,59 @@
 package controller
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"context"
 	"net/http"
+	"time"
 
+	"K-BANK/lib"
 	"K-BANK/model"
 	"github.com/gin-gonic/gin"
 )
 
 type IdentityRequest struct {
-	Name string `json:"name"`
-	Ssn  string `json:"ssn"`
-}
-
-func UnmarshalIdentityRequest(data []byte) (IdentityRequest, error) {
-	var r IdentityRequest
-	err := json.Unmarshal(data, &r)
-	return r, err
+	Name   string `json:"name"`
+	SSN    string `json:"ssn"`
+	UserID string `header:"user-id"`
 }
 
 func Identity(c *gin.Context) {
-	body, err := ioutil.ReadAll(c.Request.Body)
+	req := new(IdentityRequest)
+	err := c.Bind(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "리퀘스트 형식이 잘못되었습니다",
 		})
 		return
 	}
 
-	req, err := UnmarshalIdentityRequest(body)
+	var u model.User
+	err = model.DB.First(&u, "id = ?", req.UserID).Error
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "입력하신 정보와 일치하는 유저가 없습니다",
 		})
 		return
 	}
 
-	db, err := model.ConnectDB()
+	ssn, err := lib.Cipher.Decrypt(u.SSN)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
+		_ = c.Error(err)
 	}
-	defer db.Close()
 
-	var u User
-	_ = db.Get(&u, "select * from user where user_id = ?", c.Request.Header.Get("user_id"))
-
-	if req.Name != u.Name || req.Ssn != u.Ssn {
+	if req.Name != u.Name || req.SSN != ssn {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "입력하신 정보가 일치하지 않습니다",
 		})
 		return
 	}
 
+	tradeToken := lib.CreateToken()
+	model.TradeTokenRedis.Set(context.Background(), tradeToken, u.ID, time.Minute*5)
+
 	c.JSON(http.StatusOK, gin.H{
 		"name":         u.Name,
-		"ssn":          u.Ssn,
+		"ssn":          ssn,
 		"phone_number": u.PhoneNumber,
+		"trade-token":  tradeToken,
 	})
-
 }
