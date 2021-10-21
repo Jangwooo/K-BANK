@@ -5,13 +5,14 @@ import (
 )
 
 type User struct {
-	ID       string `gorm:"primaryKey"`
-	Password string
-	SSN      string `gorm:"unique"`
-	Name     string
-	nickName sql.NullString
-	agree    string
-	UserType string
+	ID          string `gorm:"primaryKey"`
+	Password    string
+	PhoneNumber string
+	SSN         string `gorm:"unique"`
+	Name        string
+	NickName    sql.NullString
+	Agree       string
+	UserType    string
 
 	ProfilePic ProfilePic
 	SimplePwd  SimplePwd
