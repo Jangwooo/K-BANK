@@ -1,29 +1,16 @@
 package lib
 
 import (
-	"fmt"
-	"log"
-
 	"K-BANK/model"
 )
 
-func DuplicateCheck(table string, column string, value string) bool {
-	db, err := model.ConnectDB()
-	var result string
-	if err != nil {
-		log.Panic(err)
-	}
-	defer db.Close()
-
-	fmt.Println(table, column, value)
-
-	query := fmt.Sprintf("SELECT EXISTS(select %s from %s where %s = ?)", column, table, column)
-
-	_ = db.Get(&result, query, value)
+// DuplicateCheck : 주어진 칼럼, 값을 가지고 그 값이 존재하는지 확인하는 함수
+func DuplicateCheck(column string, value string) bool {
+	result := model.DB.Limit(1).Where(column+"= ?", value).Find(&model.User{}).RowsAffected
 
 	// 0: 중복 없음, 1: 중복 있음
-	if result == "1" {
-		return false
+	if result == 0 {
+		return true
 	}
-	return true
+	return false
 }
