@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"database/sql"
 	"net/http"
+	"path/filepath"
 
 	"K-BANK/lib"
 	"K-BANK/model"
@@ -11,51 +11,28 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	ID          string `json:"id" db:"user_id"`
-	Pwd         string `json:"pwd" db:"password"`
-	SimplePwd   string `json:"simple_pwd" db:"phone_number"`
-	PhoneNumber string `json:"phone_number" db:"simple_pw"`
-	Ssn         string `json:"ssn" db:"SSN"`
-	Name        string `json:"name" db:"name"`
-	Nickname    string `json:"nickname" db:"nickname"`
-	Agree       string `json:"agree" db:"agree"`
-	UserType    string `json:"user_type" db:"user_type"`
-}
-
-func UnmarshalSignInRequest(data []byte) (User, error) {
-	var r User
-	err := json.Unmarshal(data, &r)
-	return r, err
+type SignupRequest struct {
+	ID          string `form:"id" binding:"required"`
+	Pwd         string `form:"pwd" binding:"required"`
+	SimplePwd   string `form:"simple-pwd" binding:"required"`
+	PhoneNumber string `form:"phone-number" binding:"required"`
+	SSN         string `form:"ssn" binding:"required"`
+	Name        string `form:"name" binding:"required"`
+	Nickname    string `form:"nickname"`
+	Agree       string `form:"agree" binding:"required"`
 }
 
 func SignUpHandler(c *gin.Context) {
-	db, err := model.ConnectDB()
+	req := new(SignupRequest)
+	err := c.Bind(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "서버에서! 에러가! 났다!",
-		})
-		return
-	}
-	defer db.Close()
-
-	body, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "서버에서! 에러가! 났다!",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "리퀘스트 형식이 잘못되었습니다",
 		})
 		return
 	}
 
-	req, err := UnmarshalSignInRequest(body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "서버에서! 에러가! 났다!",
-		})
-		return
-	}
-
-	result := lib.DuplicateCheck("user", "user_id", req.ID)
+	result := lib.DuplicateCheck("id", req.ID)
 	if result == false {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "ID 중복됨",
@@ -63,7 +40,7 @@ func SignUpHandler(c *gin.Context) {
 		return
 	}
 
-	result = lib.DuplicateCheck("user", "SSN", req.Ssn)
+	result = lib.DuplicateCheck("ssn", req.SSN)
 	if result == false {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "한명당 하나의 ID만 가질 수 있습니다",
@@ -78,7 +55,7 @@ func SignUpHandler(c *gin.Context) {
 		})
 		return
 	}
-	ssn, err := bcrypt.GenerateFromPassword([]byte(req.Ssn), bcrypt.DefaultCost)
+	ssn, err := lib.Cipher.Encrypt(req.SSN)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": err.Error(),
@@ -86,14 +63,63 @@ func SignUpHandler(c *gin.Context) {
 		return
 	}
 
-	req.Pwd = string(pwd)
-	req.Ssn = string(ssn)
-
-	if req.Nickname != "" {
-		_, err = db.NamedExec("INSERT INTO user(user_id, password, phone_number, SSN, name, nickname, agree) values (:user_id, :password, :phone_number, :SSN, :name, :nickname, :agree)", &req)
-	} else {
-		_, err = db.NamedExec("INSERT INTO user(user_id, password, phone_number, SSN, name, agree) values (:user_id, :password, :phone_number, :SSN, :name, :agree)", &req)
+	simplePwd, err := bcrypt.GenerateFromPassword([]byte(req.SimplePwd), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"msg": err.Error(),
+		})
+		return
 	}
+
+	var n sql.NullString
+
+	if req.Nickname == "" {
+		n.Valid = false
+	} else {
+		n.String = req.Nickname
+		n.Valid = true
+	}
+
+	var uploadPath string
+	file, err := c.FormFile("profile")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "프로필 사진을 반드시 등록해야 합니다!",
+		})
+		return
+	}
+
+	ext := filepath.Ext(file.Filename)
+	uploadPath = "./images/profile/" + req.ID + ext
+
+	if err := c.SaveUploadedFile(file, uploadPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"msg": "프로필 사진을 저장할수 없습니다! 회원가입을 다시 진행해주세요",
+		})
+		return
+	}
+
+	u := model.User{
+		ID:          req.ID,
+		Password:    string(pwd),
+		PhoneNumber: req.PhoneNumber,
+		SSN:         ssn,
+		Name:        req.Name,
+		NickName:    n,
+		UserType:    "normal",
+		Agree:       req.Agree,
+		ProfilePic: model.ProfilePic{
+			UserID: req.ID,
+			Path:   uploadPath,
+		},
+		SimplePwd: model.SimplePwd{
+			UserID: req.ID,
+			Pwd:    string(simplePwd),
+		},
+		CheckingAccount: nil,
+	}
+
+	err = model.DB.Create(&u).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": err.Error(),
