@@ -4,7 +4,9 @@ import (
 	"log"
 
 	"K-BANK/controller"
+	"K-BANK/lib"
 	"K-BANK/middleware"
+	"K-BANK/model"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -14,6 +16,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	model.Connect()
+	lib.CreateCipher()
+
 	r := gin.Default()
 
 	api := r.Group("/api")
@@ -21,8 +27,12 @@ func main() {
 		userAPI := api.Group("/user")
 		{
 			userAPI.POST("/signUp", controller.SignUpHandler)
-			userAPI.GET("/identity", controller.Identity)
 			userAPI.POST("/login", controller.LoginHandler)
+		}
+
+		authAPI := api.Group("/auth").Use(middleware.Auth)
+		{
+			authAPI.POST("/identity", controller.Identity)
 		}
 
 		bankAPI := api.Group("/banking").Use(middleware.Auth)
@@ -32,5 +42,5 @@ func main() {
 	}
 	r.Static("images", "./images/")
 
-	r.Run()
+	_ = r.Run(":8000")
 }
