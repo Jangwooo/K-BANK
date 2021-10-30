@@ -1,4 +1,4 @@
-package controller
+package user
 
 import (
 	"database/sql"
@@ -12,14 +12,14 @@ import (
 )
 
 type SignupRequest struct {
-	ID          string `form:"id" binding:"required"`
-	Pwd         string `form:"pwd" binding:"required"`
-	SimplePwd   string `form:"simple-pwd" binding:"required"`
-	PhoneNumber string `form:"phone-number" binding:"required"`
-	SSN         string `form:"ssn" binding:"required"`
-	Name        string `form:"name" binding:"required"`
-	Nickname    string `form:"nickname"`
-	Agree       string `form:"agree" binding:"required"`
+	ID          string `form:"id"  binding:"required" json:"id"`
+	Pwd         string `form:"pwd" binding:"required" json:"pwd"`
+	SimplePwd   string `form:"simple-pwd" binding:"required" json:"simple_pwd"`
+	PhoneNumber string `form:"phone-number" binding:"required" json:"phone_number"`
+	SSN         string `form:"ssn" binding:"required" json:"ssn"`
+	Name        string `form:"name" binding:"required" json:"name"`
+	Nickname    string `form:"nickname" json:"nickname"`
+	Agree       string `form:"agree" binding:"required" json:"agree"`
 }
 
 func SignUpHandler(c *gin.Context) {
