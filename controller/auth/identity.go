@@ -1,4 +1,4 @@
-package controller
+package auth
 
 import (
 	"context"
@@ -11,9 +11,8 @@ import (
 )
 
 type IdentityRequest struct {
-	Name   string `json:"name"`
-	SSN    string `json:"ssn"`
-	UserID string `header:"user-id"`
+	Name string `json:"name"`
+	SSN  string `json:"ssn"`
 }
 
 func Identity(c *gin.Context) {
@@ -26,9 +25,12 @@ func Identity(c *gin.Context) {
 		return
 	}
 
+	uid := c.GetHeader("user-id")
+
 	var u model.User
-	err = model.DB.First(&u, "id = ?", req.UserID).Error
-	if err != nil {
+	var count int64
+	model.DB.First(&u, "id = ?", uid).Count(&count)
+	if count == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "입력하신 정보와 일치하는 유저가 없습니다",
 		})

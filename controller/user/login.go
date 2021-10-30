@@ -1,4 +1,4 @@
-package controller
+package user
 
 import (
 	"context"
@@ -28,8 +28,9 @@ func LoginHandler(c *gin.Context) {
 
 	var u model.User
 
-	r := model.DB.Where("id = ?", req.ID).Find(&u).RowsAffected
-	if r == 0 {
+	var count int64
+	model.DB.Where("id = ?", req.ID).Find(&u).Count(&count)
+	if count == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "일치하는 유저가 없습니다",
 		})
