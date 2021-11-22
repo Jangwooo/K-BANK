@@ -8,6 +8,7 @@ import (
 	"K-BANK/middleware"
 	"K-BANK/model"
 	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 	"github.com/joho/godotenv"
 )
 
@@ -20,7 +21,25 @@ func main() {
 	model.Connect()
 	lib.CreateCipher()
 
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(gin.CustomRecovery(func(c *gin.Context, err interface{}) {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"msg": fmt.Sprintf("요청에 실패했습니다 err : %s", err),
+		})
+	}))
+
+	r.Use(gin.Logger())
+	r.Use(cors.Middleware(cors.Config{
+		ValidateHeaders: false,
+		Origins:         "*",
+		RequestHeaders: "Origin, Authorization, Content-Type, Referer, Accept, User-Agent, Accept-Encoding, " +
+			"Accept-Language, Cache-Control, Connection, Host, Pragma, Sec-Fetch-Mode, access_token, trade_token",
+		ExposedHeaders: "",
+		Methods:        "GET, PUT, POST, DELETE",
+		MaxAge:         50 * time.Second,
+		Credentials:    true,
+	}))
 
 	api := r.Group("/api")
 	{
