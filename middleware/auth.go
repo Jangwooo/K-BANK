@@ -12,7 +12,7 @@ func Auth(c *gin.Context) {
 	accessToken := c.GetHeader("access_token")
 
 	if id, err := model.AccessTokenRedis.Get(context.Background(), accessToken).Result(); err == nil {
-		c.Request.Header.Add("user-id", id)
+		c.Request.Header.Add("user_id", id)
 		c.Next()
 		return
 	} else {

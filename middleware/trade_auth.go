@@ -9,7 +9,7 @@ import (
 )
 
 func TradeAuth(c *gin.Context) {
-	token := c.GetHeader("trade-token")
+	token := c.GetHeader("trade_token")
 
 	if token == "" {
 		c.JSON(http.StatusBadRequest, gin.H{

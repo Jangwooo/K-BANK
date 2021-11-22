@@ -12,9 +12,9 @@ import (
 )
 
 type OpenAccountRequest struct {
-	AccountNickname string `json:"account-nickname" `
+	AccountNickname string `json:"account_nickname" `
 	Pwd             string `json:"pwd" binding:"required"`
-	TradeToken      string `header:"trade-token"`
+	TradeToken      string `header:"trade_token"`
 }
 
 // OpenAccountHandler : 일반 입출금 계좌 생성
@@ -49,7 +49,7 @@ func OpenAccountHandler(c *gin.Context) {
 		panic(err)
 	}
 
-	uid := c.GetHeader("user-id")
+	uid := c.GetHeader("user_id")
 	ca = model.CheckingAccount{
 		ID:       aNum,
 		BankID:   "110",

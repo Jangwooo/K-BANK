@@ -14,8 +14,8 @@ import (
 type SignupRequest struct {
 	ID          string `form:"id"  binding:"required" json:"id"`
 	Pwd         string `form:"pwd" binding:"required" json:"pwd"`
-	SimplePwd   string `form:"simple-pwd" binding:"required" json:"simple_pwd"`
-	PhoneNumber string `form:"phone-number" binding:"required" json:"phone_number"`
+	SimplePwd   string `form:"simple_pwd" binding:"required" json:"simple_pwd"`
+	PhoneNumber string `form:"phone_number" binding:"required" json:"phone_number"`
 	SSN         string `form:"ssn" binding:"required" json:"ssn"`
 	Name        string `form:"name" binding:"required" json:"name"`
 	Nickname    string `form:"nickname" json:"nickname"`

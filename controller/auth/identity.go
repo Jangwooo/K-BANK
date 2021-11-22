@@ -25,7 +25,7 @@ func Identity(c *gin.Context) {
 		return
 	}
 
-	uid := c.GetHeader("user-id")
+	uid := c.GetHeader("user_id")
 
 	var u model.User
 	var count int64
@@ -56,6 +56,6 @@ func Identity(c *gin.Context) {
 		"name":         u.Name,
 		"ssn":          ssn,
 		"phone_number": u.PhoneNumber,
-		"trade-token":  tradeToken,
+		"trade_token":  tradeToken,
 	})
 }
