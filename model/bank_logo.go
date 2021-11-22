@@ -1,6 +1,6 @@
 package model
 
 type BankLogo struct {
-	BankID string
-	Path   string
+	BankID string `json:"bank_id,omitempty"`
+	Path   string `json:"path,omitempty"`
 }
