@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	DB                *gorm.DB
-	AccessTokenRedis  *redis.Client
-	RefreshTokenRedis *redis.Client
-	TradeTokenRedis   *redis.Client
+	DB                 *gorm.DB
+	AccessTokenRedis   *redis.Client
+	PersonalTokenRedis *redis.Client
+	TradeTokenRedis    *redis.Client
 )
 
 func Connect() {
@@ -55,7 +55,7 @@ func Connect() {
 		DB:       0,                      // use default DB
 	})
 
-	RefreshTokenRedis = redis.NewClient(&redis.Options{
+	PersonalTokenRedis = redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("redis_address"),
 		Password: os.Getenv("redis_pwd"), // no password set
 		DB:       1,                      // use default DB
@@ -74,7 +74,7 @@ func Connect() {
 		log.Panic(err)
 	}
 
-	_, err = RefreshTokenRedis.Ping(ctx).Result()
+	_, err = PersonalTokenRedis.Ping(ctx).Result()
 	if err != nil {
 		log.Panic(err)
 	}
