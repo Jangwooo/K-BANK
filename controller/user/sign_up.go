@@ -23,52 +23,44 @@ type SignupRequest struct {
 }
 
 func SignUpHandler(c *gin.Context) {
+	type Response struct {
+		Msg string `json:"msg,omitempty"`
+	}
+	res := Response{}
 	req := new(SignupRequest)
 	err := c.Bind(req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "리퀘스트 형식이 잘못되었습니다",
-		})
+		res.Msg = "리퀘스트 형식이 잘못되었습니다"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	result := lib.DuplicateCheck("id", req.ID)
 	if result == false {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "ID 중복됨",
-		})
+		res.Msg = "ID 중복됨"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	result = lib.DuplicateCheck("ssn", req.SSN)
 	if result == false {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "한명당 하나의 ID만 가질 수 있습니다",
-		})
+		res.Msg = "한명당 하나의 ID만 가질 수 있습니다"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	pwd, err := bcrypt.GenerateFromPassword([]byte(req.Pwd), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
+		panic(err)
 	}
 	ssn, err := lib.Cipher.Encrypt(req.SSN)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
+		panic(err)
 	}
 
 	simplePwd, err := bcrypt.GenerateFromPassword([]byte(req.SimplePwd), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
+		panic(err)
 	}
 
 	var n sql.NullString
@@ -83,9 +75,8 @@ func SignUpHandler(c *gin.Context) {
 	var uploadPath string
 	file, err := c.FormFile("profile")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "프로필 사진을 반드시 등록해야 합니다!",
-		})
+		res.Msg = "프로필 사진을 반드시 등록해야 합니다!"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
@@ -93,10 +84,7 @@ func SignUpHandler(c *gin.Context) {
 	uploadPath = "./images/profile/" + req.ID + ext
 
 	if err := c.SaveUploadedFile(file, uploadPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "프로필 사진을 저장할수 없습니다! 회원가입을 다시 진행해주세요",
-		})
-		return
+		panic(err)
 	}
 
 	u := model.User{
@@ -108,11 +96,11 @@ func SignUpHandler(c *gin.Context) {
 		NickName:    n,
 		UserType:    "normal",
 		Agree:       req.Agree,
-		ProfilePic: model.ProfilePic{
+		ProfilePic: &model.ProfilePic{
 			UserID: req.ID,
 			Path:   uploadPath,
 		},
-		SimplePwd: model.SimplePwd{
+		SimplePwd: &model.SimplePwd{
 			UserID: req.ID,
 			Pwd:    string(simplePwd),
 		},
@@ -121,13 +109,9 @@ func SignUpHandler(c *gin.Context) {
 
 	err = model.DB.Create(&u).Error
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": err.Error(),
-		})
-		return
+		panic(err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"msg": "계정 생성 성공!",
-	})
+	res.Msg = "성공"
+	c.JSON(http.StatusOK, res)
 }

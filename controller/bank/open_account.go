@@ -2,6 +2,7 @@ package bank
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"K-BANK/model"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type OpenAccountRequest struct {
@@ -17,8 +19,14 @@ type OpenAccountRequest struct {
 	TradeToken      string `header:"trade_token"`
 }
 
-// OpenAccountHandler : 일반 입출금 계좌 생성
+// OpenAccountHandler is 일반 입출금 계좌 생성
 func OpenAccountHandler(c *gin.Context) {
+	type Response struct {
+		Msg           string `json:"msg,omitempty"`
+		AccountNumber string `json:"account_number,omitempty"`
+	}
+	res := Response{}
+
 	req := new(OpenAccountRequest)
 	err := c.Bind(req)
 	if err != nil {
@@ -28,18 +36,23 @@ func OpenAccountHandler(c *gin.Context) {
 		return
 	}
 
-	var aNum string
-	var count int64
+	var aid string
+	var n int64
 	ca := model.CheckingAccount{}
 	for {
-		aNum, err = lib.CreateCode()
+		aid, err = lib.CreateCode()
 		if err != nil {
 			panic(err)
 		}
 
-		model.DB.First(&ca, "id = ?", "110513"+aNum).Count(&count)
-		if count == 0 {
-			aNum = "110" + "513" + aNum
+		err := model.DB.First(&ca, "id = ?", "110"+"513"+aid).Count(&n).Error
+
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			panic(err)
+		}
+
+		if n == 0 {
+			aid = "110" + "513" + aid
 			break
 		}
 	}
@@ -51,7 +64,7 @@ func OpenAccountHandler(c *gin.Context) {
 
 	uid := c.GetHeader("user_id")
 	ca = model.CheckingAccount{
-		ID:       aNum,
+		ID:       aid,
 		BankID:   "110",
 		UserID:   uid,
 		Password: string(pwd),
@@ -63,7 +76,7 @@ func OpenAccountHandler(c *gin.Context) {
 		CreatedAt: time.Now(),
 		State:     "normal",
 		Limit:     10000,
-		History: []model.History{
+		History: &[]model.History{
 			{
 				TradeType: "New",
 				AccountID: uid,
@@ -82,8 +95,8 @@ func OpenAccountHandler(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"msg":     "성공!",
-		"account": ca,
-	})
+	res.Msg = "성공"
+	res.AccountNumber = ca.ID
+
+	c.JSON(http.StatusOK, res)
 }

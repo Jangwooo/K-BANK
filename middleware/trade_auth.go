@@ -21,7 +21,7 @@ func TradeAuth(c *gin.Context) {
 
 	token, err := model.TradeTokenRedis.Get(context.Background(), token).Result()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusUnauthorized, gin.H{
 			"msg": "올바른 거래토큰이 아니거나 만료된 토큰입니다",
 		})
 		c.Abort()

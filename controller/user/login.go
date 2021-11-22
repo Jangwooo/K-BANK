@@ -17,12 +17,19 @@ type LoginRequest struct {
 }
 
 func LoginHandler(c *gin.Context) {
+	type Response struct {
+		Msg           string    `json:"msg,omitempty"`
+		AccessToken   string    `json:"access_token,omitempty"`
+		Expiration    time.Time `json:"expiration,omitempty"`
+		PersonalToken string    `json:"personal_token,omitempty"`
+	}
+	res := Response{}
+
 	req := new(LoginRequest)
 	err := c.Bind(req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "리퀘스트 형식이 잘못되었습니다",
-		})
+		res.Msg = "리퀘스트 형식이 잘못되었습니다"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
@@ -31,17 +38,15 @@ func LoginHandler(c *gin.Context) {
 	var count int64
 	model.DB.Where("id = ?", req.ID).Find(&u).Count(&count)
 	if count == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "일치하는 유저가 없습니다",
-		})
+		res.Msg = "일치하는 유저가 없습니다"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	match := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Pwd))
 	if match != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "비밀번호가 일치하지 않습니다",
-		})
+		res.Msg = "비밀번호가 일치하지 않습니다"
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
@@ -49,11 +54,12 @@ func LoginHandler(c *gin.Context) {
 	refreshToken := lib.CreateToken()
 
 	model.AccessTokenRedis.Set(context.Background(), accessToken, req.ID, time.Hour*2)
-	model.RefreshTokenRedis.Set(context.Background(), refreshToken, req.ID, time.Hour*24*7)
+	model.PersonalTokenRedis.Set(context.Background(), refreshToken, req.ID, 0)
 
-	c.JSON(200, gin.H{
-		"refresh_token": refreshToken,
-		"expiration":    time.Now().Add(time.Hour * 2),
-		"access_token":  accessToken,
-	})
+	res.Msg = "성공"
+	res.AccessToken = accessToken
+	res.Expiration = time.Now().Add(time.Hour * 2)
+	res.PersonalToken = refreshToken
+
+	c.JSON(http.StatusOK, res)
 }
