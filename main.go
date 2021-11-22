@@ -1,9 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
+	"time"
 
-	"K-BANK/controller"
+	"K-BANK/controller/auth"
+	"K-BANK/controller/bank"
+	"K-BANK/controller/bank/open"
+	"K-BANK/controller/user"
 	"K-BANK/lib"
 	"K-BANK/middleware"
 	"K-BANK/model"
@@ -45,18 +51,26 @@ func main() {
 	{
 		userAPI := api.Group("/user")
 		{
-			userAPI.POST("/signUp", controller.SignUpHandler)
-			userAPI.POST("/login", controller.LoginHandler)
+			userAPI.GET("/check", user.IdCheck)
+			userAPI.POST("/signUp", user.SignUpHandler)
+			userAPI.POST("/login", user.LoginHandler)
 		}
 
 		authAPI := api.Group("/auth").Use(middleware.Auth)
 		{
-			authAPI.POST("/identity", controller.Identity)
+			authAPI.POST("/identity", auth.Identity)
 		}
 
 		bankAPI := api.Group("/banking").Use(middleware.Auth)
 		{
-			bankAPI.POST("/account", controller.OpenAccountHandler)
+			bankAPI.POST("/account", middleware.TradeAuth, bank.OpenAccountHandler)
+			bankAPI.GET("/accounts", bank.GetAccounts)
+		}
+
+		openBankingAPI := api.Group("/open")
+		{
+			openBankingAPI.GET("/accounts/:phone_number", open.GetAccounts)
+			openBankingAPI.GET("/accounts", open.AccountCheck)
 		}
 	}
 	r.Static("images", "./images/")
