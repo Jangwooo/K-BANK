@@ -7,6 +7,7 @@ import (
 
 	"K-BANK/lib"
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +28,7 @@ func Identity(c *gin.Context) {
 
 	uid := c.GetHeader("user_id")
 
-	var u model.User
+	var u DAO.User
 	var count int64
 	model.DB.First(&u, "id = ?", uid).Count(&count)
 	if count == 0 {

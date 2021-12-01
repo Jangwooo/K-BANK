@@ -4,14 +4,15 @@ import (
 	"net/http"
 
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"github.com/gin-gonic/gin"
 )
 
 // GetAccounts is 다른 은행에서 이 사람이 가지고 있는 모든 계좌를 조회할때 사용하는 것
 func GetAccounts(c *gin.Context) {
 	type response struct {
-		Msg      string                  `json:"msg,omitempty"`
-		Accounts []model.CheckingAccount `json:"accounts,omitempty"`
+		Msg      string                `json:"msg,omitempty"`
+		Accounts []DAO.CheckingAccount `json:"accounts,omitempty"`
 	}
 	res := response{}
 

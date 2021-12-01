@@ -7,6 +7,7 @@ import (
 
 	"K-BANK/lib"
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -87,7 +88,7 @@ func SignUpHandler(c *gin.Context) {
 		panic(err)
 	}
 
-	u := model.User{
+	u := DAO.User{
 		ID:          req.ID,
 		Password:    string(pwd),
 		PhoneNumber: req.PhoneNumber,
@@ -96,11 +97,11 @@ func SignUpHandler(c *gin.Context) {
 		NickName:    n,
 		UserType:    "normal",
 		Agree:       req.Agree,
-		ProfilePic: &model.ProfilePic{
+		ProfilePic: &DAO.ProfilePic{
 			UserID: req.ID,
 			Path:   uploadPath,
 		},
-		SimplePwd: &model.SimplePwd{
+		SimplePwd: &DAO.SimplePwd{
 			UserID: req.ID,
 			Pwd:    string(simplePwd),
 		},

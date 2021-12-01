@@ -7,6 +7,7 @@ import (
 
 	"K-BANK/lib"
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,7 +34,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	var u model.User
+	var u DAO.User
 
 	var count int64
 	model.DB.Where("id = ?", req.ID).Find(&u).Count(&count)

@@ -8,6 +8,7 @@ import (
 
 	"K-BANK/lib"
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -38,7 +39,7 @@ func OpenAccountHandler(c *gin.Context) {
 
 	var aid string
 	var n int64
-	ca := model.CheckingAccount{}
+	ca := DAO.CheckingAccount{}
 	for {
 		aid, err = lib.CreateCode()
 		if err != nil {
@@ -63,7 +64,7 @@ func OpenAccountHandler(c *gin.Context) {
 	}
 
 	uid := c.GetHeader("user_id")
-	ca = model.CheckingAccount{
+	ca = DAO.CheckingAccount{
 		ID:       aid,
 		BankID:   "110",
 		UserID:   uid,
@@ -76,7 +77,7 @@ func OpenAccountHandler(c *gin.Context) {
 		CreatedAt: time.Now(),
 		State:     "normal",
 		Limit:     10000,
-		History: &[]model.History{
+		History: &[]DAO.History{
 			{
 				TradeType: "New",
 				AccountID: uid,

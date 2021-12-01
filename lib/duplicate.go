@@ -4,13 +4,14 @@ import (
 	"errors"
 
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"gorm.io/gorm"
 )
 
 // DuplicateCheck : 주어진 칼럼, 값을 가지고 그 값이 존재하는지 확인하는 함수
 func DuplicateCheck(column string, value string) bool {
 	var count int64
-	err := model.DB.Limit(1).Where(column+" = ?", value).Find(&model.User{}).Count(&count).Error
+	err := model.DB.Limit(1).Where(column+" = ?", value).Find(&DAO.User{}).Count(&count).Error
 
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		panic(err)
