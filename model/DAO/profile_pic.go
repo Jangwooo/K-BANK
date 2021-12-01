@@ -1,4 +1,4 @@
-package model
+package DAO
 
 type ProfilePic struct {
 	UserID string `gorm:"primaryKey" json:"user_id,omitempty"`

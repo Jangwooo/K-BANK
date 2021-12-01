@@ -1,4 +1,4 @@
-package model
+package DAO
 
 type ErrorLog struct {
 	ID      string `gorm:"primaryKey" json:"id,omitempty"`

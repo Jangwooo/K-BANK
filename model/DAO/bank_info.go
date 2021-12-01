@@ -1,4 +1,4 @@
-package model
+package DAO
 
 type BankInfo struct {
 	ID       string `gorm:"primaryKey" json:"id,omitempty"`

@@ -1,4 +1,4 @@
-package model
+package DAO
 
 type BankLogo struct {
 	BankID string `json:"bank_id,omitempty"`
