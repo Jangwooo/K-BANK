@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"K-BANK/model/DAO"
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/go-redis/redis/v8"
@@ -37,15 +38,15 @@ func Connect() {
 	}
 
 	_ = db.AutoMigrate(
-		&User{},
-		&SimplePwd{},
-		&ProfilePic{},
-		&History{},
-		&ErrorLog{},
-		&BankInfo{},
-		&BankLogo{},
-		&CheckingAccount{},
-		&AnotherAccount{},
+		&DAO.User{},
+		&DAO.SimplePwd{},
+		&DAO.ProfilePic{},
+		&DAO.History{},
+		&DAO.ErrorLog{},
+		&DAO.BankInfo{},
+		&DAO.BankLogo{},
+		&DAO.CheckingAccount{},
+		&DAO.AnotherAccount{},
 	)
 	DB = db
 
