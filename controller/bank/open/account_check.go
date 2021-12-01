@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"K-BANK/model"
+	"K-BANK/model/DAO"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -15,14 +16,14 @@ func AccountCheck(c *gin.Context) {
 
 	var n int64
 	type response struct {
-		Msg           string `json:"code"`
-		Name          string `json:"name"`
-		AccountNumber string `json:"account_number"`
+		Msg       string `json:"msg,omitempty"`
+		Name      string `json:"name,omitempty"`
+		AccountID string `json:"account_id,omitempty"`
 	}
 
 	res := response{}
 
-	err := model.DB.Model(&model.User{}).Select("checking_accounts.id as account_number, name").
+	err := model.DB.Model(&DAO.User{}).Select("checking_accounts.id as account_id, name").
 		Joins("left join checking_accounts on checking_accounts.user_id = users.id").
 		Where("checking_accounts.id = ?", aid).Scan(&res).Count(&n).Error
 
@@ -31,8 +32,9 @@ func AccountCheck(c *gin.Context) {
 	}
 
 	if n == 0 {
-		res.Msg = "계좌가 올바르지 않습니다"
+		res.Msg = "해당하는 계좌가 없습니다"
 		c.JSON(http.StatusBadRequest, res)
+		return
 	}
 
 	res.Msg = "성공!"
