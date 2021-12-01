@@ -65,6 +65,8 @@ func main() {
 		{
 			bankAPI.POST("/account", middleware.TradeAuth, bank.OpenAccountHandler)
 			bankAPI.GET("/accounts", bank.GetAccounts)
+			bankAPI.GET("/account/:account_id", bank.GetAccount)
+			bankAPI.POST("/deposit", bank.Deposit)
 		}
 
 		openBankingAPI := api.Group("/open")
